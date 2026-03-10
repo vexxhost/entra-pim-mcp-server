@@ -1,9 +1,13 @@
 #!/usr/bin/env node
 
+import { createRequire } from 'module';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { registerListEligibleTool } from './tools/list-eligible.js';
 import { registerActivateTool } from './tools/activate.js';
+
+const require = createRequire(import.meta.url);
+const { version } = require('../package.json') as { version: string };
 
 const AZURE_TENANT_ID = process.env.AZURE_TENANT_ID;
 const AZURE_CLIENT_ID = process.env.AZURE_CLIENT_ID;
@@ -15,7 +19,7 @@ if (!AZURE_TENANT_ID || !AZURE_CLIENT_ID) {
 
 const server = new McpServer({
   name: 'entra-pim-mcp-server',
-  version: '0.1.0',
+  version,
 });
 
 registerListEligibleTool(server);

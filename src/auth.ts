@@ -15,17 +15,20 @@ useIdentityPlugin(cachePersistencePlugin);
 // Node.js v24+ adds Accept-Language: * per WHATWG Fetch spec step 16.
 // Graph PIM endpoints reject it with CultureNotFoundException.
 // Use an undici interceptor to replace the default with en-US.
-setGlobalDispatcher(new Agent().compose(function (dispatch) {
-  return function (opts, handler) {
-    const h = opts.headers as Record<string, string> | undefined;
-    if (h && typeof h === 'object' && !Array.isArray(h)) {
-      if (h['accept-language'] === '*') {
-        h['accept-language'] = 'en-US';
+// NOTE: This affects all HTTP requests in the process, not just Graph API calls.
+setGlobalDispatcher(
+  new Agent().compose(function (dispatch) {
+    return function (opts, handler) {
+      const h = opts.headers as Record<string, string> | undefined;
+      if (h && typeof h === 'object' && !Array.isArray(h)) {
+        if (h['accept-language'] === '*') {
+          h['accept-language'] = 'en-US';
+        }
       }
-    }
-    return dispatch(opts, handler);
-  };
-}));
+      return dispatch(opts, handler);
+    };
+  }),
+);
 
 const GRAPH_SCOPES = [
   'User.Read',
@@ -81,6 +84,7 @@ async function initClient(): Promise<GraphServiceClient> {
     tokenCachePersistenceOptions: {
       enabled: true,
       name: 'entra-pim-mcp-server',
+      // Required for environments without a system keychain (e.g. WSL).
       unsafeAllowUnencryptedStorage: true,
     },
   });
