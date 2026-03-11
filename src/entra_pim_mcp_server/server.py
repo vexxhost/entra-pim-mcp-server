@@ -286,15 +286,11 @@ async def _get_max_duration(
     ),
 )
 async def activate(
-    name: Annotated[str, Field(description="Name of the group or Entra role to activate (case-insensitive).")],
-    justification: Annotated[str, Field(description="Reason for activating the assignment.")],
-    duration: Annotated[int | None, Field(description="Duration in hours (defaults to policy maximum).", ge=1)] = None,
-    access_id: Annotated[
-        str, Field(description='Access relationship type for groups (e.g. "member" or "owner").')
-    ] = "member",
-    directory_scope_id: Annotated[
-        str, Field(description='Directory scope for Entra roles (default: "/" for tenant-wide).')
-    ] = "/",
+    name: Annotated[str, "Group or Entra role name to activate"],
+    justification: Annotated[str, "Reason for activating the assignment"],
+    duration: Annotated[int | None, Field(description="Duration in hours", ge=1)] = None,
+    access_id: Annotated[str, "Access relationship type for groups"] = "member",
+    directory_scope_id: Annotated[str, "Directory scope for Entra roles"] = "/",
 ) -> ActivateResult:
     """Activate a PIM-eligible group or Entra role assignment.
 
