@@ -1,0 +1,20 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "entra-pim-mcp-server"
+version = "0.1.0"
+description = "MCP server for Azure Entra PIM — list eligible assignments and activate group/role assignments"
+readme = "README.md"
+license = "Apache-2.0"
+requires-python = ">=3.11"
+dependencies = [
+    "mcp[cli]",
+    "msgraph-sdk",
+    "azure-identity",
+    "platformdirs",
+]
+
+[project.scripts]
+entra-pim-mcp-server = "entra_pim_mcp_server.server:main"

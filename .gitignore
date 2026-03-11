@@ -1,8 +1,10 @@
-node_modules/
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
 dist/
-*.js
-*.js.map
-*.d.ts
-!src/**
+build/
+.eggs/
+*.egg
+.venv/
 .env
-registered_clients.json
