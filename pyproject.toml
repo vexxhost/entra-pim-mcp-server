@@ -24,6 +24,9 @@ dev = [
     "ruff>=0.15.5",
 ]
 
+[tool.pyright]
+reportMissingTypeStubs = false
+
 [tool.ruff]
 line-length = 120
 
