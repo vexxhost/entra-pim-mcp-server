@@ -4,6 +4,7 @@ import asyncio
 import os
 import sys
 from pathlib import Path
+from typing import Literal
 
 from azure.identity import (
     AuthenticationRecord,
@@ -13,6 +14,7 @@ from azure.identity import (
 from mcp.server.fastmcp import FastMCP
 from msgraph import GraphServiceClient
 from platformdirs import user_config_dir
+from pydantic import BaseModel
 
 GRAPH_SCOPES = [
     "User.Read",
@@ -78,7 +80,110 @@ async def get_client() -> GraphServiceClient:
     return _client
 
 
+class Assignment(BaseModel):
+    type: Literal["Group", "EntraRole"]
+    name: str
+    id: str
+    role: str
+    member_type: str
+    end_time: str
+    status: Literal["Active", "Eligible"]
+
+
+class ListEligibleResult(BaseModel):
+    assignments: list[Assignment]
+
+
 mcp = FastMCP("entra-pim-mcp-server")
+
+
+@mcp.tool(
+    annotations={
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": False,
+    },
+)
+async def list_eligible() -> ListEligibleResult:
+    """List all eligible Privileged Identity Management (PIM) assignments (Group and Entra Role) for the authenticated user.
+
+    If not authenticated, a browser window will open automatically for login.
+    """
+    from kiota_abstractions.base_request_configuration import RequestConfiguration
+
+    client = await get_client()
+
+    group_elig_config = RequestConfiguration(
+        query_parameters={"expand": ["group"]},
+    )
+    role_elig_config = RequestConfiguration(
+        query_parameters={"expand": ["roleDefinition"]},
+    )
+
+    group_data, group_active, role_data, role_active = await asyncio.gather(
+        client.identity_governance.privileged_access.group.eligibility_schedules.filter_by_current_user_with_on(
+            "principal"
+        ).get(request_configuration=group_elig_config),
+        client.identity_governance.privileged_access.group.assignment_schedule_instances.filter_by_current_user_with_on(
+            "principal"
+        ).get(),
+        client.role_management.directory.role_eligibility_schedules.filter_by_current_user_with_on("principal").get(
+            request_configuration=role_elig_config
+        ),
+        client.role_management.directory.role_assignment_schedule_instances.filter_by_current_user_with_on(
+            "principal"
+        ).get(),
+    )
+
+    active_group_keys: set[str] = set()
+    for a in group_active.value or []:
+        active_group_keys.add(f"{a.group_id}:{a.access_id}")
+
+    active_role_ids: set[str] = set()
+    for a in role_active.value or []:
+        if a.role_definition_id:
+            active_role_ids.add(a.role_definition_id)
+
+    assignments: list[Assignment] = []
+
+    for item in group_data.value or []:
+        group = getattr(item, "group", None)
+        display_name = getattr(group, "display_name", None) if group else None
+        end_dt = None
+        if item.schedule_info and item.schedule_info.expiration:
+            end_dt = item.schedule_info.expiration.end_date_time
+        assignments.append(
+            Assignment(
+                type="Group",
+                name=display_name or item.group_id or "",
+                id=item.group_id or "",
+                role=item.access_id or "",
+                member_type=item.member_type or "",
+                end_time=end_dt.isoformat() if end_dt else "N/A",
+                status="Active" if f"{item.group_id}:{item.access_id}" in active_group_keys else "Eligible",
+            )
+        )
+
+    for item in role_data.value or []:
+        role_def = item.role_definition
+        display_name = role_def.display_name if role_def else None
+        end_dt = None
+        if item.schedule_info and item.schedule_info.expiration:
+            end_dt = item.schedule_info.expiration.end_date_time
+        assignments.append(
+            Assignment(
+                type="EntraRole",
+                name=display_name or item.role_definition_id or "",
+                id=item.role_definition_id or "",
+                role=display_name or item.role_definition_id or "",
+                member_type="Direct",
+                end_time=end_dt.isoformat() if end_dt else "N/A",
+                status="Active" if item.role_definition_id in active_role_ids else "Eligible",
+            )
+        )
+
+    return ListEligibleResult(assignments=assignments)
 
 
 def main() -> None:
