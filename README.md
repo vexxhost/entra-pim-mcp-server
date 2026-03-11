@@ -11,7 +11,7 @@ An MCP (Model Context Protocol) server for Azure Entra PIM (Privileged Identity 
 
 ## Prerequisites
 
-- [Node.js](https://nodejs.org/) 18 or later
+- Python 3.10 or later (or [uv](https://docs.astral.sh/uv/) to run without installing Python manually)
 - An Azure Entra ID tenant with PIM enabled
 - An Entra ID app registration (public client) with the required permissions
 
@@ -50,10 +50,10 @@ An MCP (Model Context Protocol) server for Azure Entra PIM (Privileged Identity 
 
 ## Usage
 
-### Run directly with npx
+### Run directly with uvx
 
 ```bash
-AZURE_TENANT_ID="your-tenant-id" AZURE_CLIENT_ID="your-client-id" npx entra-pim-mcp-server
+AZURE_TENANT_ID="your-tenant-id" AZURE_CLIENT_ID="your-client-id" uvx --from git+https://github.com/vexxhost/entra-pim-mcp-server entra-pim-mcp-server
 ```
 
 ### Run from source
@@ -61,9 +61,8 @@ AZURE_TENANT_ID="your-tenant-id" AZURE_CLIENT_ID="your-client-id" npx entra-pim-
 ```bash
 git clone https://github.com/vexxhost/entra-pim-mcp-server.git
 cd entra-pim-mcp-server
-npm install
-npm run build
-AZURE_TENANT_ID="..." AZURE_CLIENT_ID="..." npm start
+uv sync
+AZURE_TENANT_ID="..." AZURE_CLIENT_ID="..." uv run entra-pim-mcp-server
 ```
 
 ## MCP Client Configuration
@@ -76,8 +75,8 @@ Add to your Claude Desktop configuration (`~/Library/Application Support/Claude/
 {
   "mcpServers": {
     "entra-pim": {
-      "command": "npx",
-      "args": ["entra-pim-mcp-server"],
+      "command": "uvx",
+      "args": ["--from", "git+https://github.com/vexxhost/entra-pim-mcp-server", "entra-pim-mcp-server"],
       "env": {
         "AZURE_TENANT_ID": "your-tenant-id",
         "AZURE_CLIENT_ID": "your-client-id"
@@ -95,8 +94,27 @@ Add to your `.vscode/mcp.json`:
 {
   "servers": {
     "entra-pim": {
-      "command": "npx",
-      "args": ["entra-pim-mcp-server"],
+      "command": "uvx",
+      "args": ["--from", "git+https://github.com/vexxhost/entra-pim-mcp-server", "entra-pim-mcp-server"],
+      "env": {
+        "AZURE_TENANT_ID": "your-tenant-id",
+        "AZURE_CLIENT_ID": "your-client-id"
+      }
+    }
+  }
+}
+```
+
+### Cursor
+
+Add to your Cursor MCP settings (`.cursor/mcp.json`):
+
+```json
+{
+  "mcpServers": {
+    "entra-pim": {
+      "command": "uvx",
+      "args": ["--from", "git+https://github.com/vexxhost/entra-pim-mcp-server", "entra-pim-mcp-server"],
       "env": {
         "AZURE_TENANT_ID": "your-tenant-id",
         "AZURE_CLIENT_ID": "your-client-id"
@@ -139,14 +157,11 @@ Activates a PIM assignment for a group or Entra role.
 **Parameters:**
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `group_name` | string | One of these four | Name of the group to activate |
-| `group_id` | string | | ID of the group to activate |
-| `role_name` | string | | Display name of the Entra role |
-| `role_id` | string | | ID of the Entra role |
+| `name` | string | Yes | Name of the group or Entra role to activate (case-insensitive) |
 | `justification` | string | Yes | Reason for activation |
 | `duration` | number | No | Duration in hours (defaults to policy maximum) |
-
-Specify exactly **one** identifier (`group_name`, `group_id`, `role_name`, or `role_id`).
+| `access_id` | string | No | Access relationship for groups: `member` (default) or `owner` |
+| `directory_scope_id` | string | No | Directory scope for Entra roles (default: `/`) |
 
 ## Architecture
 
