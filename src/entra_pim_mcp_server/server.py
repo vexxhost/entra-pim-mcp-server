@@ -13,7 +13,8 @@ from azure.identity import (
     TokenCachePersistenceOptions,
 )
 from mcp.server.fastmcp import FastMCP
-from msgraph import GraphServiceClient
+from mcp.types import ToolAnnotations
+from msgraph.graph_service_client import GraphServiceClient
 from platformdirs import user_config_dir
 from pydantic import BaseModel
 
@@ -106,12 +107,12 @@ mcp = FastMCP("entra-pim-mcp-server")
 
 
 @mcp.tool(
-    annotations={
-        "readOnlyHint": True,
-        "destructiveHint": False,
-        "idempotentHint": True,
-        "openWorldHint": False,
-    },
+    annotations=ToolAnnotations(
+        readOnlyHint=True,
+        destructiveHint=False,
+        idempotentHint=True,
+        openWorldHint=False,
+    ),
 )
 async def list_eligible() -> ListEligibleResult:
     """List all eligible Privileged Identity Management (PIM) assignments (Group and Entra Role) for the authenticated user.
@@ -119,14 +120,24 @@ async def list_eligible() -> ListEligibleResult:
     If not authenticated, a browser window will open automatically for login.
     """
     from kiota_abstractions.base_request_configuration import RequestConfiguration
+    from msgraph.generated.identity_governance.privileged_access.group.eligibility_schedules.filter_by_current_user_with_on.filter_by_current_user_with_on_request_builder import (
+        FilterByCurrentUserWithOnRequestBuilder as GroupEligFilterBuilder,
+    )
+    from msgraph.generated.role_management.directory.role_eligibility_schedules.filter_by_current_user_with_on.filter_by_current_user_with_on_request_builder import (
+        FilterByCurrentUserWithOnRequestBuilder as RoleEligFilterBuilder,
+    )
 
     client = await get_client()
 
     group_elig_config = RequestConfiguration(
-        query_parameters={"expand": ["group"]},
+        query_parameters=GroupEligFilterBuilder.FilterByCurrentUserWithOnRequestBuilderGetQueryParameters(
+            expand=["group"],
+        ),
     )
     role_elig_config = RequestConfiguration(
-        query_parameters={"expand": ["roleDefinition"]},
+        query_parameters=RoleEligFilterBuilder.FilterByCurrentUserWithOnRequestBuilderGetQueryParameters(
+            expand=["roleDefinition"],
+        ),
     )
 
     group_data, group_active, role_data, role_active = await asyncio.gather(
@@ -145,51 +156,55 @@ async def list_eligible() -> ListEligibleResult:
     )
 
     active_group_keys: set[str] = set()
-    for a in group_active.value or []:
-        active_group_keys.add(f"{a.group_id}:{a.access_id}")
+    if group_active:
+        for a in group_active.value or []:
+            active_group_keys.add(f"{a.group_id}:{a.access_id}")
 
     active_role_ids: set[str] = set()
-    for a in role_active.value or []:
-        if a.role_definition_id:
-            active_role_ids.add(a.role_definition_id)
+    if role_active:
+        for a in role_active.value or []:
+            if a.role_definition_id:
+                active_role_ids.add(a.role_definition_id)
 
     assignments: list[Assignment] = []
 
-    for item in group_data.value or []:
-        group = getattr(item, "group", None)
-        display_name = getattr(group, "display_name", None) if group else None
-        end_dt = None
-        if item.schedule_info and item.schedule_info.expiration:
-            end_dt = item.schedule_info.expiration.end_date_time
-        assignments.append(
-            Assignment(
-                type="Group",
-                name=display_name or item.group_id or "",
-                id=item.group_id or "",
-                role=item.access_id or "",
-                member_type=item.member_type or "",
-                end_time=end_dt.isoformat() if end_dt else "N/A",
-                status="Active" if f"{item.group_id}:{item.access_id}" in active_group_keys else "Eligible",
+    if group_data:
+        for item in group_data.value or []:
+            group = getattr(item, "group", None)
+            display_name = getattr(group, "display_name", None) if group else None
+            end_dt = None
+            if item.schedule_info and item.schedule_info.expiration:
+                end_dt = item.schedule_info.expiration.end_date_time
+            assignments.append(
+                Assignment(
+                    type="Group",
+                    name=display_name or item.group_id or "",
+                    id=item.group_id or "",
+                    role=item.access_id or "",
+                    member_type=item.member_type or "",
+                    end_time=end_dt.isoformat() if end_dt else "N/A",
+                    status="Active" if f"{item.group_id}:{item.access_id}" in active_group_keys else "Eligible",
+                )
             )
-        )
 
-    for item in role_data.value or []:
-        role_def = item.role_definition
-        display_name = role_def.display_name if role_def else None
-        end_dt = None
-        if item.schedule_info and item.schedule_info.expiration:
-            end_dt = item.schedule_info.expiration.end_date_time
-        assignments.append(
-            Assignment(
-                type="EntraRole",
-                name=display_name or item.role_definition_id or "",
-                id=item.role_definition_id or "",
-                role=display_name or item.role_definition_id or "",
-                member_type="Direct",
-                end_time=end_dt.isoformat() if end_dt else "N/A",
-                status="Active" if item.role_definition_id in active_role_ids else "Eligible",
+    if role_data:
+        for item in role_data.value or []:
+            role_def = item.role_definition
+            display_name = role_def.display_name if role_def else None
+            end_dt = None
+            if item.schedule_info and item.schedule_info.expiration:
+                end_dt = item.schedule_info.expiration.end_date_time
+            assignments.append(
+                Assignment(
+                    type="EntraRole",
+                    name=display_name or item.role_definition_id or "",
+                    id=item.role_definition_id or "",
+                    role=display_name or item.role_definition_id or "",
+                    member_type="Direct",
+                    end_time=end_dt.isoformat() if end_dt else "N/A",
+                    status="Active" if item.role_definition_id in active_role_ids else "Eligible",
+                )
             )
-        )
 
     return ListEligibleResult(assignments=assignments)
 
@@ -208,17 +223,19 @@ async def _get_max_duration(
             f"and roleDefinitionId eq '{role_definition_id}'"
         )
         from kiota_abstractions.base_request_configuration import RequestConfiguration
+        from msgraph.generated.policies.role_management_policy_assignments.role_management_policy_assignments_request_builder import (
+            RoleManagementPolicyAssignmentsRequestBuilder,
+        )
 
-        config = RequestConfiguration(query_parameters={"filter": odata_filter})
+        config = RequestConfiguration(
+            query_parameters=RoleManagementPolicyAssignmentsRequestBuilder.RoleManagementPolicyAssignmentsRequestBuilderGetQueryParameters(
+                filter=odata_filter,
+            ),
+        )
 
-        if scope_type == "Group":
-            policies = await client.policies.role_management_policy_assignments.get(
-                request_configuration=config
-            )
-        else:
-            policies = await client.policies.role_management_policy_assignments.get(
-                request_configuration=config
-            )
+        policies = await client.policies.role_management_policy_assignments.get(
+            request_configuration=config
+        )
 
         if not policies or not policies.value:
             return DEFAULT_DURATION
@@ -247,12 +264,12 @@ async def _get_max_duration(
 
 
 @mcp.tool(
-    annotations={
-        "readOnlyHint": False,
-        "destructiveHint": False,
-        "idempotentHint": False,
-        "openWorldHint": False,
-    },
+    annotations=ToolAnnotations(
+        readOnlyHint=False,
+        destructiveHint=False,
+        idempotentHint=False,
+        openWorldHint=False,
+    ),
 )
 async def activate(
     name: str,
@@ -273,6 +290,9 @@ async def activate(
         directory_scope_id: Directory scope for Entra roles (default: "/").
     """
     from kiota_abstractions.base_request_configuration import RequestConfiguration
+    from msgraph.generated.identity_governance.privileged_access.group.eligibility_schedules.filter_by_current_user_with_on.filter_by_current_user_with_on_request_builder import (
+        FilterByCurrentUserWithOnRequestBuilder as GroupEligFilterBuilder2,
+    )
     from msgraph.generated.models.expiration_pattern import ExpirationPattern
     from msgraph.generated.models.expiration_pattern_type import ExpirationPatternType
     from msgraph.generated.models.privileged_access_group_assignment_schedule_request import (
@@ -286,15 +306,25 @@ async def activate(
     from msgraph.generated.models.unified_role_assignment_schedule_request import (
         UnifiedRoleAssignmentScheduleRequest,
     )
+    from msgraph.generated.models.unified_role_schedule_request_actions import (
+        UnifiedRoleScheduleRequestActions,
+    )
+    from msgraph.generated.role_management.directory.role_eligibility_schedules.filter_by_current_user_with_on.filter_by_current_user_with_on_request_builder import (
+        FilterByCurrentUserWithOnRequestBuilder as RoleEligFilterBuilder2,
+    )
 
     client = await get_client()
 
     # Fetch eligibility data to find the matching assignment
     group_elig_config = RequestConfiguration(
-        query_parameters={"expand": ["group"]},
+        query_parameters=GroupEligFilterBuilder2.FilterByCurrentUserWithOnRequestBuilderGetQueryParameters(
+            expand=["group"],
+        ),
     )
     role_elig_config = RequestConfiguration(
-        query_parameters={"expand": ["roleDefinition"]},
+        query_parameters=RoleEligFilterBuilder2.FilterByCurrentUserWithOnRequestBuilderGetQueryParameters(
+            expand=["roleDefinition"],
+        ),
     )
     group_data, role_data = await asyncio.gather(
         client.identity_governance.privileged_access.group.eligibility_schedules.filter_by_current_user_with_on(
@@ -308,20 +338,29 @@ async def activate(
     name_lower = name.lower()
 
     # Search in group eligibilities
-    for item in group_data.value or []:
+    for item in (group_data.value if group_data else []) or []:
         group = getattr(item, "group", None)
         display_name = getattr(group, "display_name", None) if group else None
         if display_name and display_name.lower() == name_lower:
             # Resolve access_id enum
             access_id_raw = item.access_id
-            access_id_str = access_id_raw.value if hasattr(access_id_raw, "value") else str(access_id_raw)
+            if access_id_raw is None:
+                access_id_str = "member"
+            elif hasattr(access_id_raw, "value"):
+                access_id_str = str(access_id_raw.value)
+            else:
+                access_id_str = str(access_id_raw)
+
+            group_id = item.group_id or ""
 
             # Look up the maximum duration from the policy
-            max_dur = await _get_max_duration(client, item.group_id, "Group", access_id_str)
+            max_dur = await _get_max_duration(client, group_id, "Group", access_id_str)
             act_duration = timedelta(hours=duration) if duration else max_dur
 
             # Get current user ID
             me = await client.me.get()
+            if not me or not me.id:
+                raise RuntimeError("Failed to retrieve current user identity.")
 
             # Resolve access_id for the request body
             if access_id.lower() == "owner":
@@ -332,7 +371,7 @@ async def activate(
             body = PrivilegedAccessGroupAssignmentScheduleRequest(
                 access_id=access_id_enum,
                 principal_id=me.id,
-                group_id=item.group_id,
+                group_id=group_id,
                 action=ScheduleRequestActions.SelfActivate,
                 justification=justification,
                 schedule_info=RequestSchedule(
@@ -353,21 +392,25 @@ async def activate(
             )
 
     # Search in role eligibilities
-    for item in role_data.value or []:
+    for item in (role_data.value if role_data else []) or []:
         role_def = item.role_definition
         display_name = role_def.display_name if role_def else None
         if display_name and display_name.lower() == name_lower:
+            role_def_id = item.role_definition_id or ""
+
             max_dur = await _get_max_duration(
-                client, directory_scope_id, "DirectoryRole", item.role_definition_id
+                client, directory_scope_id, "DirectoryRole", role_def_id
             )
             act_duration = timedelta(hours=duration) if duration else max_dur
 
             me = await client.me.get()
+            if not me or not me.id:
+                raise RuntimeError("Failed to retrieve current user identity.")
 
             body = UnifiedRoleAssignmentScheduleRequest(
-                action=ScheduleRequestActions.SelfActivate,
+                action=UnifiedRoleScheduleRequestActions.SelfActivate,
                 principal_id=me.id,
-                role_definition_id=item.role_definition_id,
+                role_definition_id=role_def_id,
                 directory_scope_id=directory_scope_id,
                 justification=justification,
                 schedule_info=RequestSchedule(
