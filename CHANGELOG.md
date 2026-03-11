@@ -1,5 +1,21 @@
 # Changelog
 
+## [1.0.0](https://github.com/vexxhost/entra-pim-mcp-server/compare/v0.1.0...v1.0.0) (2026-03-11)
+
+
+### ⚠ BREAKING CHANGES
+
+* AZURE_CLIENT_ID environment variable is no longer used. Remove it from your configuration.
+
+### Features
+
+* use Microsoft Graph PowerShell well-known client ID ([f81ac29](https://github.com/vexxhost/entra-pim-mcp-server/commit/f81ac298e847f0274501cbc03a9f1396ce8679e4))
+
+
+### Documentation
+
+* update examples to use PyPI package directly ([744edde](https://github.com/vexxhost/entra-pim-mcp-server/commit/744edde899ea4f7be9027b0dade7c27034662a38))
+
 ## 0.1.0 (2026-03-11)
 
 
