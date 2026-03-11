@@ -90,7 +90,7 @@ async def get_client() -> GraphServiceClient:
     credential = InteractiveBrowserCredential(
         tenant_id=tenant_id,
         client_id=client_id,
-        redirect_uri="http://localhost",
+        redirect_uri="http://localhost:8400",
         authentication_record=auth_record,
         cache_persistence_options=TokenCachePersistenceOptions(
             name="entra-pim-mcp-server",
