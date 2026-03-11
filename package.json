@@ -1,6 +1,6 @@
 {
   "name": "entra-pim-mcp-server",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "MCP server for Azure Entra PIM — list eligible assignments and activate group/role assignments",
   "license": "Apache-2.0",
   "type": "module",
