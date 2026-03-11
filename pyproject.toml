@@ -18,3 +18,16 @@ dependencies = [
 
 [project.scripts]
 entra-pim-mcp-server = "entra_pim_mcp_server.server:main"
+
+[dependency-groups]
+dev = [
+    "ruff>=0.15.5",
+]
+
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]
+# msgraph SDK has extremely long module paths in imports
+ignore = ["E501"]

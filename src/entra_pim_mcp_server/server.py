@@ -12,8 +12,34 @@ from azure.identity import (
     InteractiveBrowserCredential,
     TokenCachePersistenceOptions,
 )
+from kiota_abstractions.base_request_configuration import RequestConfiguration
 from mcp.server.fastmcp import FastMCP
 from mcp.types import ToolAnnotations
+from msgraph.generated.identity_governance.privileged_access.group.eligibility_schedules.filter_by_current_user_with_on.filter_by_current_user_with_on_request_builder import (
+    FilterByCurrentUserWithOnRequestBuilder as GroupEligFilterBuilder,
+)
+from msgraph.generated.models.expiration_pattern import ExpirationPattern
+from msgraph.generated.models.expiration_pattern_type import ExpirationPatternType
+from msgraph.generated.models.privileged_access_group_assignment_schedule_request import (
+    PrivilegedAccessGroupAssignmentScheduleRequest,
+)
+from msgraph.generated.models.privileged_access_group_relationships import (
+    PrivilegedAccessGroupRelationships,
+)
+from msgraph.generated.models.request_schedule import RequestSchedule
+from msgraph.generated.models.schedule_request_actions import ScheduleRequestActions
+from msgraph.generated.models.unified_role_assignment_schedule_request import (
+    UnifiedRoleAssignmentScheduleRequest,
+)
+from msgraph.generated.models.unified_role_schedule_request_actions import (
+    UnifiedRoleScheduleRequestActions,
+)
+from msgraph.generated.policies.role_management_policy_assignments.role_management_policy_assignments_request_builder import (
+    RoleManagementPolicyAssignmentsRequestBuilder,
+)
+from msgraph.generated.role_management.directory.role_eligibility_schedules.filter_by_current_user_with_on.filter_by_current_user_with_on_request_builder import (
+    FilterByCurrentUserWithOnRequestBuilder as RoleEligFilterBuilder,
+)
 from msgraph.graph_service_client import GraphServiceClient
 from platformdirs import user_config_dir
 from pydantic import BaseModel
@@ -57,9 +83,7 @@ async def get_client() -> GraphServiceClient:
     tenant_id = os.environ.get("AZURE_TENANT_ID")
     client_id = os.environ.get("AZURE_CLIENT_ID")
     if not tenant_id or not client_id:
-        raise RuntimeError(
-            "AZURE_TENANT_ID and AZURE_CLIENT_ID environment variables are required."
-        )
+        raise RuntimeError("AZURE_TENANT_ID and AZURE_CLIENT_ID environment variables are required.")
 
     auth_record = _load_auth_record()
 
@@ -119,13 +143,6 @@ async def list_eligible() -> ListEligibleResult:
 
     If not authenticated, a browser window will open automatically for login.
     """
-    from kiota_abstractions.base_request_configuration import RequestConfiguration
-    from msgraph.generated.identity_governance.privileged_access.group.eligibility_schedules.filter_by_current_user_with_on.filter_by_current_user_with_on_request_builder import (
-        FilterByCurrentUserWithOnRequestBuilder as GroupEligFilterBuilder,
-    )
-    from msgraph.generated.role_management.directory.role_eligibility_schedules.filter_by_current_user_with_on.filter_by_current_user_with_on_request_builder import (
-        FilterByCurrentUserWithOnRequestBuilder as RoleEligFilterBuilder,
-    )
 
     client = await get_client()
 
@@ -219,12 +236,7 @@ async def _get_max_duration(
     DEFAULT_DURATION = timedelta(hours=8)
     try:
         odata_filter = (
-            f"scopeId eq '{scope_id}' and scopeType eq '{scope_type}' "
-            f"and roleDefinitionId eq '{role_definition_id}'"
-        )
-        from kiota_abstractions.base_request_configuration import RequestConfiguration
-        from msgraph.generated.policies.role_management_policy_assignments.role_management_policy_assignments_request_builder import (
-            RoleManagementPolicyAssignmentsRequestBuilder,
+            f"scopeId eq '{scope_id}' and scopeType eq '{scope_type}' and roleDefinitionId eq '{role_definition_id}'"
         )
 
         config = RequestConfiguration(
@@ -233,9 +245,7 @@ async def _get_max_duration(
             ),
         )
 
-        policies = await client.policies.role_management_policy_assignments.get(
-            request_configuration=config
-        )
+        policies = await client.policies.role_management_policy_assignments.get(request_configuration=config)
 
         if not policies or not policies.value:
             return DEFAULT_DURATION
@@ -289,40 +299,16 @@ async def activate(
         access_id: Access relationship type for groups (default: "member").
         directory_scope_id: Directory scope for Entra roles (default: "/").
     """
-    from kiota_abstractions.base_request_configuration import RequestConfiguration
-    from msgraph.generated.identity_governance.privileged_access.group.eligibility_schedules.filter_by_current_user_with_on.filter_by_current_user_with_on_request_builder import (
-        FilterByCurrentUserWithOnRequestBuilder as GroupEligFilterBuilder2,
-    )
-    from msgraph.generated.models.expiration_pattern import ExpirationPattern
-    from msgraph.generated.models.expiration_pattern_type import ExpirationPatternType
-    from msgraph.generated.models.privileged_access_group_assignment_schedule_request import (
-        PrivilegedAccessGroupAssignmentScheduleRequest,
-    )
-    from msgraph.generated.models.privileged_access_group_relationships import (
-        PrivilegedAccessGroupRelationships,
-    )
-    from msgraph.generated.models.request_schedule import RequestSchedule
-    from msgraph.generated.models.schedule_request_actions import ScheduleRequestActions
-    from msgraph.generated.models.unified_role_assignment_schedule_request import (
-        UnifiedRoleAssignmentScheduleRequest,
-    )
-    from msgraph.generated.models.unified_role_schedule_request_actions import (
-        UnifiedRoleScheduleRequestActions,
-    )
-    from msgraph.generated.role_management.directory.role_eligibility_schedules.filter_by_current_user_with_on.filter_by_current_user_with_on_request_builder import (
-        FilterByCurrentUserWithOnRequestBuilder as RoleEligFilterBuilder2,
-    )
-
     client = await get_client()
 
     # Fetch eligibility data to find the matching assignment
     group_elig_config = RequestConfiguration(
-        query_parameters=GroupEligFilterBuilder2.FilterByCurrentUserWithOnRequestBuilderGetQueryParameters(
+        query_parameters=GroupEligFilterBuilder.FilterByCurrentUserWithOnRequestBuilderGetQueryParameters(
             expand=["group"],
         ),
     )
     role_elig_config = RequestConfiguration(
-        query_parameters=RoleEligFilterBuilder2.FilterByCurrentUserWithOnRequestBuilderGetQueryParameters(
+        query_parameters=RoleEligFilterBuilder.FilterByCurrentUserWithOnRequestBuilderGetQueryParameters(
             expand=["roleDefinition"],
         ),
     )
@@ -398,9 +384,7 @@ async def activate(
         if display_name and display_name.lower() == name_lower:
             role_def_id = item.role_definition_id or ""
 
-            max_dur = await _get_max_duration(
-                client, directory_scope_id, "DirectoryRole", role_def_id
-            )
+            max_dur = await _get_max_duration(client, directory_scope_id, "DirectoryRole", role_def_id)
             act_duration = timedelta(hours=duration) if duration else max_dur
 
             me = await client.me.get()
@@ -430,10 +414,7 @@ async def activate(
                 duration=str(act_duration),
             )
 
-    raise ValueError(
-        f"No eligible assignment found matching '{name}'. "
-        "Use list_eligible to see available assignments."
-    )
+    raise ValueError(f"No eligible assignment found matching '{name}'. Use list_eligible to see available assignments.")
 
 
 def main() -> None:

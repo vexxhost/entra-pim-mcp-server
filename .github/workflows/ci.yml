@@ -13,4 +13,6 @@ jobs:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
       - run: uv sync
+      - run: uv run ruff check src/
+      - run: uv run ruff format --check src/
       - run: uv run python -c "from entra_pim_mcp_server.server import mcp; print('Import OK')"
