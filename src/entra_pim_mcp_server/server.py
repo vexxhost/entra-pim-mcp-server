@@ -141,10 +141,7 @@ mcp = FastMCP("entra-pim-mcp-server")
     ),
 )
 async def list_eligible() -> ListEligibleResult:
-    """List all eligible Privileged Identity Management (PIM) assignments (Group and Entra Role) for the authenticated user.
-
-    If not authenticated, a browser window will open automatically for login.
-    """
+    """List all eligible PIM assignments (Group and Entra Role) for the authenticated user."""
 
     client = await get_client()
 
@@ -292,10 +289,7 @@ async def activate(
     access_id: Annotated[str, "Access relationship type for groups"] = "member",
     directory_scope_id: Annotated[str, "Directory scope for Entra roles"] = "/",
 ) -> ActivateResult:
-    """Activate a PIM-eligible group or Entra role assignment.
-
-    Specify group_name or role_name with a justification.
-    """
+    """Activate a PIM-eligible group or Entra role assignment."""
     client = await get_client()
 
     # Fetch eligibility data to find the matching assignment
