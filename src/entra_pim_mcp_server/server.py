@@ -98,8 +98,8 @@ async def get_client() -> GraphServiceClient:
         ),
     )
 
-    new_record = await asyncio.to_thread(credential.authenticate, scopes=GRAPH_SCOPES)
-    if new_record:
+    if auth_record is None:
+        new_record = await asyncio.to_thread(credential.authenticate, scopes=GRAPH_SCOPES)
         _save_auth_record(new_record)
 
     _client = GraphServiceClient(credentials=credential, scopes=GRAPH_SCOPES)
