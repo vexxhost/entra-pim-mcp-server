@@ -5,7 +5,7 @@ import os
 import sys
 from datetime import timedelta
 from pathlib import Path
-from typing import Literal
+from typing import Annotated, Literal
 
 from azure.identity import (
     AuthenticationRecord,
@@ -42,7 +42,7 @@ from msgraph.generated.role_management.directory.role_eligibility_schedules.filt
 )
 from msgraph.graph_service_client import GraphServiceClient
 from platformdirs import user_config_dir
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 GRAPH_SCOPES = [
     "User.Read",
@@ -131,6 +131,8 @@ mcp = FastMCP("entra-pim-mcp-server")
 
 
 @mcp.tool(
+    title="List eligible PIM assignments",
+    structured_output=True,
     annotations=ToolAnnotations(
         readOnlyHint=True,
         destructiveHint=False,
@@ -274,6 +276,8 @@ async def _get_max_duration(
 
 
 @mcp.tool(
+    title="Activate PIM assignment",
+    structured_output=True,
     annotations=ToolAnnotations(
         readOnlyHint=False,
         destructiveHint=False,
@@ -282,22 +286,19 @@ async def _get_max_duration(
     ),
 )
 async def activate(
-    name: str,
-    justification: str,
-    duration: int | None = None,
-    access_id: str = "member",
-    directory_scope_id: str = "/",
+    name: Annotated[str, Field(description="Name of the group or Entra role to activate (case-insensitive).")],
+    justification: Annotated[str, Field(description="Reason for activating the assignment.")],
+    duration: Annotated[int | None, Field(description="Duration in hours (defaults to policy maximum).", ge=1)] = None,
+    access_id: Annotated[
+        str, Field(description='Access relationship type for groups (e.g. "member" or "owner").')
+    ] = "member",
+    directory_scope_id: Annotated[
+        str, Field(description='Directory scope for Entra roles (default: "/" for tenant-wide).')
+    ] = "/",
 ) -> ActivateResult:
     """Activate a PIM-eligible group or Entra role assignment.
 
     Specify group_name or role_name with a justification.
-
-    Args:
-        name: Name of the group or Entra role to activate (case-insensitive).
-        justification: Reason for activating the assignment.
-        duration: Duration in hours (defaults to policy maximum).
-        access_id: Access relationship type for groups (default: "member").
-        directory_scope_id: Directory scope for Entra roles (default: "/").
     """
     client = await get_client()
 
