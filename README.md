@@ -53,7 +53,7 @@ An MCP (Model Context Protocol) server for Azure Entra PIM (Privileged Identity 
 ### Run directly with uvx
 
 ```bash
-AZURE_TENANT_ID="your-tenant-id" AZURE_CLIENT_ID="your-client-id" uvx --from git+https://github.com/vexxhost/entra-pim-mcp-server entra-pim-mcp-server
+AZURE_TENANT_ID="your-tenant-id" AZURE_CLIENT_ID="your-client-id" uvx entra-pim-mcp-server
 ```
 
 ### Run from source
@@ -76,7 +76,7 @@ Add to your Claude Desktop configuration (`~/Library/Application Support/Claude/
   "mcpServers": {
     "entra-pim": {
       "command": "uvx",
-      "args": ["--from", "git+https://github.com/vexxhost/entra-pim-mcp-server", "entra-pim-mcp-server"],
+      "args": ["entra-pim-mcp-server"],
       "env": {
         "AZURE_TENANT_ID": "your-tenant-id",
         "AZURE_CLIENT_ID": "your-client-id"
@@ -95,7 +95,7 @@ Add to your `.vscode/mcp.json`:
   "servers": {
     "entra-pim": {
       "command": "uvx",
-      "args": ["--from", "git+https://github.com/vexxhost/entra-pim-mcp-server", "entra-pim-mcp-server"],
+      "args": ["entra-pim-mcp-server"],
       "env": {
         "AZURE_TENANT_ID": "your-tenant-id",
         "AZURE_CLIENT_ID": "your-client-id"
@@ -114,7 +114,7 @@ Add to your Cursor MCP settings (`.cursor/mcp.json`):
   "mcpServers": {
     "entra-pim": {
       "command": "uvx",
-      "args": ["--from", "git+https://github.com/vexxhost/entra-pim-mcp-server", "entra-pim-mcp-server"],
+      "args": ["entra-pim-mcp-server"],
       "env": {
         "AZURE_TENANT_ID": "your-tenant-id",
         "AZURE_CLIENT_ID": "your-client-id"
@@ -160,7 +160,6 @@ Activates a PIM assignment for a group or Entra role.
 | `name` | string | Yes | Name of the group or Entra role to activate (case-insensitive) |
 | `justification` | string | Yes | Reason for activation |
 | `duration` | number | No | Duration in hours (defaults to policy maximum) |
-| `access_id` | string | No | Access relationship for groups: `member` (default) or `owner` |
 | `directory_scope_id` | string | No | Directory scope for Entra roles (default: `/`) |
 
 ## Architecture
