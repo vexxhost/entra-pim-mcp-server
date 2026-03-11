@@ -7,53 +7,26 @@ An MCP (Model Context Protocol) server for Azure Entra PIM (Privileged Identity 
 - **List eligible PIM assignments** — view all Group and Entra Role assignments you're eligible for, with their activation status
 - **Activate PIM assignments** — activate group or role assignments by name or ID, with a justification and optional duration
 - **Automatic browser authentication** — opens your browser automatically when login is needed, with persistent token caching
-- **No secrets required** — uses a public client app registration, no client secret necessary
+- **No app registration required** — uses the Microsoft Graph PowerShell well-known client ID, no setup needed
+- **No secrets required** — uses delegated authentication, no client secret necessary
 
 ## Prerequisites
 
 - Python 3.10 or later (or [uv](https://docs.astral.sh/uv/) to run without installing Python manually)
 - An Azure Entra ID tenant with PIM enabled
-- An Entra ID app registration (public client) with the required permissions
-
-## Entra ID App Registration
-
-1. Go to [Azure Portal → Microsoft Entra ID → App registrations](https://portal.azure.com/#view/Microsoft_AAD_IAM/ActiveDirectoryMenuBlade/~/RegisteredApps)
-2. Click **New registration**
-3. Set:
-   - **Name**: e.g., `Entra PIM MCP Server`
-   - **Supported account types**: Accounts in this organizational directory only
-   - **Redirect URI**: Select **Web** and add `http://localhost`
-4. After creation, go to **Authentication**:
-   - Enable **Allow public client flows** → Yes
-5. Go to **API permissions** and add the following **Microsoft Graph** delegated permissions:
-
-   | Permission | Description |
-   |------------|-------------|
-   | `User.Read` | Sign in and read user profile |
-   | `Group.Read.All` | Read all groups |
-   | `PrivilegedAssignmentSchedule.ReadWrite.AzureADGroup` | Read/write privileged access group assignment schedules |
-   | `PrivilegedEligibilitySchedule.Read.AzureADGroup` | Read privileged access group eligibility schedules |
-   | `RoleManagementPolicy.Read.AzureADGroup` | Read group role management policies |
-   | `RoleEligibilitySchedule.Read.Directory` | Read role eligibility schedules |
-   | `RoleAssignmentSchedule.ReadWrite.Directory` | Read/write role assignment schedules |
-   | `RoleManagementPolicy.Read.Directory` | Read role management policies |
-
-6. Click **Grant admin consent** (requires admin privileges)
-7. Note down the **Application (client) ID** and your **Directory (tenant) ID**
 
 ## Environment Variables
 
 | Variable | Required | Description |
 |----------|----------|-------------|
 | `AZURE_TENANT_ID` | Yes | Your Azure AD tenant ID |
-| `AZURE_CLIENT_ID` | Yes | The app registration client ID |
 
 ## Usage
 
 ### Run directly with uvx
 
 ```bash
-AZURE_TENANT_ID="your-tenant-id" AZURE_CLIENT_ID="your-client-id" uvx entra-pim-mcp-server
+AZURE_TENANT_ID="your-tenant-id" uvx entra-pim-mcp-server
 ```
 
 ### Run from source
@@ -62,7 +35,7 @@ AZURE_TENANT_ID="your-tenant-id" AZURE_CLIENT_ID="your-client-id" uvx entra-pim-
 git clone https://github.com/vexxhost/entra-pim-mcp-server.git
 cd entra-pim-mcp-server
 uv sync
-AZURE_TENANT_ID="..." AZURE_CLIENT_ID="..." uv run entra-pim-mcp-server
+AZURE_TENANT_ID="..." uv run entra-pim-mcp-server
 ```
 
 ## MCP Client Configuration
@@ -78,8 +51,7 @@ Add to your Claude Desktop configuration (`~/Library/Application Support/Claude/
       "command": "uvx",
       "args": ["entra-pim-mcp-server"],
       "env": {
-        "AZURE_TENANT_ID": "your-tenant-id",
-        "AZURE_CLIENT_ID": "your-client-id"
+        "AZURE_TENANT_ID": "your-tenant-id"
       }
     }
   }
@@ -97,8 +69,7 @@ Add to your `.vscode/mcp.json`:
       "command": "uvx",
       "args": ["entra-pim-mcp-server"],
       "env": {
-        "AZURE_TENANT_ID": "your-tenant-id",
-        "AZURE_CLIENT_ID": "your-client-id"
+        "AZURE_TENANT_ID": "your-tenant-id"
       }
     }
   }
@@ -116,8 +87,7 @@ Add to your Cursor MCP settings (`.cursor/mcp.json`):
       "command": "uvx",
       "args": ["entra-pim-mcp-server"],
       "env": {
-        "AZURE_TENANT_ID": "your-tenant-id",
-        "AZURE_CLIENT_ID": "your-client-id"
+        "AZURE_TENANT_ID": "your-tenant-id"
       }
     }
   }

@@ -41,6 +41,8 @@ from msgraph.graph_service_client import GraphServiceClient
 from platformdirs import user_config_dir
 from pydantic import BaseModel, Field
 
+GRAPH_POWERSHELL_CLIENT_ID = "14d82eec-204b-4c2f-b7e8-296a70dab67e"
+
 GRAPH_SCOPES = [
     "User.Read",
     "Group.Read.All",
@@ -78,15 +80,14 @@ async def get_client() -> GraphServiceClient:
         return _client
 
     tenant_id = os.environ.get("AZURE_TENANT_ID")
-    client_id = os.environ.get("AZURE_CLIENT_ID")
-    if not tenant_id or not client_id:
-        raise RuntimeError("AZURE_TENANT_ID and AZURE_CLIENT_ID environment variables are required.")
+    if not tenant_id:
+        raise RuntimeError("AZURE_TENANT_ID environment variable is required.")
 
     auth_record = _load_auth_record()
 
     credential = InteractiveBrowserCredential(
         tenant_id=tenant_id,
-        client_id=client_id,
+        client_id=GRAPH_POWERSHELL_CLIENT_ID,
         redirect_uri="http://localhost:8400",
         authentication_record=auth_record,
         cache_persistence_options=TokenCachePersistenceOptions(
@@ -415,10 +416,9 @@ async def activate(
 
 def main() -> None:
     tenant_id = os.environ.get("AZURE_TENANT_ID")
-    client_id = os.environ.get("AZURE_CLIENT_ID")
-    if not tenant_id or not client_id:
+    if not tenant_id:
         print(
-            "Error: AZURE_TENANT_ID and AZURE_CLIENT_ID environment variables are required.",
+            "Error: AZURE_TENANT_ID environment variable is required.",
             file=sys.stderr,
         )
         sys.exit(1)
