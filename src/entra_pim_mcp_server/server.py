@@ -23,9 +23,6 @@ from msgraph.generated.models.expiration_pattern_type import ExpirationPatternTy
 from msgraph.generated.models.privileged_access_group_assignment_schedule_request import (
     PrivilegedAccessGroupAssignmentScheduleRequest,
 )
-from msgraph.generated.models.privileged_access_group_relationships import (
-    PrivilegedAccessGroupRelationships,
-)
 from msgraph.generated.models.request_schedule import RequestSchedule
 from msgraph.generated.models.schedule_request_actions import ScheduleRequestActions
 from msgraph.generated.models.unified_role_assignment_schedule_request import (
@@ -286,7 +283,6 @@ async def activate(
     name: Annotated[str, "Group or Entra role name to activate"],
     justification: Annotated[str, "Reason for activating the assignment"],
     duration: Annotated[int | None, Field(description="Duration in hours", ge=1)] = None,
-    access_id: Annotated[str, "Access relationship type for groups"] = "member",
     directory_scope_id: Annotated[str, "Directory scope for Entra roles"] = "/",
 ) -> ActivateResult:
     """Activate a PIM-eligible group or Entra role assignment."""
@@ -319,7 +315,9 @@ async def activate(
         group = getattr(item, "group", None)
         display_name = getattr(group, "display_name", None) if group else None
         if display_name and display_name.lower() == name_lower:
-            # Resolve access_id enum
+            group_id = item.group_id or ""
+
+            # Use the access_id from the eligibility item directly
             access_id_raw = item.access_id
             if access_id_raw is None:
                 access_id_str = "member"
@@ -327,8 +325,6 @@ async def activate(
                 access_id_str = str(access_id_raw.value)
             else:
                 access_id_str = str(access_id_raw)
-
-            group_id = item.group_id or ""
 
             # Look up the maximum duration from the policy
             max_dur = await _get_max_duration(client, group_id, "Group", access_id_str)
@@ -339,14 +335,8 @@ async def activate(
             if not me or not me.id:
                 raise RuntimeError("Failed to retrieve current user identity.")
 
-            # Resolve access_id for the request body
-            if access_id.lower() == "owner":
-                access_id_enum = PrivilegedAccessGroupRelationships.Owner
-            else:
-                access_id_enum = PrivilegedAccessGroupRelationships.Member
-
             body = PrivilegedAccessGroupAssignmentScheduleRequest(
-                access_id=access_id_enum,
+                access_id=item.access_id,
                 principal_id=me.id,
                 group_id=group_id,
                 action=ScheduleRequestActions.SelfActivate,
