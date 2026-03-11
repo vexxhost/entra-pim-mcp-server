@@ -3,7 +3,7 @@
 import asyncio
 import os
 import sys
-from datetime import timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Annotated, Literal
 
@@ -222,6 +222,31 @@ async def list_eligible() -> ListEligibleResult:
     return ListEligibleResult(assignments=assignments)
 
 
+def _timedelta_to_iso8601(td: timedelta) -> str:
+    """Convert timedelta to ISO 8601 duration (e.g. PT8H). Works around msgraph SDK serializing timedelta as '8:00:00'."""
+    total_secs = int(td.total_seconds())
+    hours, rem = divmod(total_secs, 3600)
+    minutes, secs = divmod(rem, 60)
+    parts = ["PT"]
+    if hours:
+        parts.append(f"{hours}H")
+    if minutes:
+        parts.append(f"{minutes}M")
+    if secs or not (hours or minutes):
+        parts.append(f"{secs}S")
+    return "".join(parts)
+
+
+def _make_schedule(duration: timedelta) -> RequestSchedule:
+    """Build a RequestSchedule with proper ISO 8601 duration and startDateTime."""
+    expiration = ExpirationPattern(type=ExpirationPatternType.AfterDuration)
+    expiration.additional_data["duration"] = _timedelta_to_iso8601(duration)
+    return RequestSchedule(
+        start_date_time=datetime.now(timezone.utc),
+        expiration=expiration,
+    )
+
+
 async def _get_max_duration(
     client: GraphServiceClient,
     scope_id: str,
@@ -341,12 +366,7 @@ async def activate(
                 group_id=group_id,
                 action=ScheduleRequestActions.SelfActivate,
                 justification=justification,
-                schedule_info=RequestSchedule(
-                    expiration=ExpirationPattern(
-                        type=ExpirationPatternType.AfterDuration,
-                        duration=act_duration,
-                    ),
-                ),
+                schedule_info=_make_schedule(act_duration),
             )
 
             await client.identity_governance.privileged_access.group.assignment_schedule_requests.post(body)
@@ -378,12 +398,7 @@ async def activate(
                 role_definition_id=role_def_id,
                 directory_scope_id=directory_scope_id,
                 justification=justification,
-                schedule_info=RequestSchedule(
-                    expiration=ExpirationPattern(
-                        type=ExpirationPatternType.AfterDuration,
-                        duration=act_duration,
-                    ),
-                ),
+                schedule_info=_make_schedule(act_duration),
             )
 
             await client.role_management.directory.role_assignment_schedule_requests.post(body)
