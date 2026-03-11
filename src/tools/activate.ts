@@ -43,7 +43,7 @@ export function registerActivateTool(server: McpServer): void {
   server.registerTool(
     'activate',
     {
-      title: 'Activate Privileged Identity Management Assignment',
+      title: 'Activate privileged identity management assignment',
       description:
         'Activate a PIM assignment for a group or Entra role. Specify exactly one of: group_name, group_id, role_name, or role_id. If not authenticated, a browser window will open automatically for login.',
       inputSchema: {

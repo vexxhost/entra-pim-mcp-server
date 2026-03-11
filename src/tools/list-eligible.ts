@@ -6,7 +6,7 @@ export function registerListEligibleTool(server: McpServer): void {
   server.registerTool(
     'list_eligible',
     {
-      title: 'List Eligible Privileged Identity Management Assignments',
+      title: 'List eligible privileged identity management assignments',
       description:
         'List all eligible Privileged Identity Management (PIM) assignments (Group and Entra Role) for the authenticated user. If not authenticated, a browser window will open automatically for login.',
       outputSchema: z.object({
