@@ -8,7 +8,7 @@
       "name": "entra-pim",
       "source": {
         "source": "local",
-        "path": "./plugins/entra-pim"
+        "path": "."
       },
       "policy": {
         "installation": "AVAILABLE",

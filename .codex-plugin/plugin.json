@@ -1,7 +1,7 @@
 {
   "name": "entra-pim",
   "version": "1.0.0",
-  "description": "Codex plugin for listing and activating Microsoft Entra PIM assignments.",
+  "description": "Codex plugin for Microsoft Entra Privileged Identity Management access workflows.",
   "author": {
     "name": "VEXXHOST, Inc.",
     "url": "https://vexxhost.com"
@@ -20,8 +20,8 @@
   "skills": "./skills/",
   "interface": {
     "displayName": "Entra PIM",
-    "shortDescription": "List and activate eligible Microsoft Entra PIM assignments.",
-    "longDescription": "Adds Codex guidance and MCP tools for Microsoft Entra Privileged Identity Management. Use it to list eligible group and Entra role assignments, check active status, and activate an eligible assignment with a justification through the entra-pim-mcp-server package.",
+    "shortDescription": "Request and manage Microsoft Entra PIM access.",
+    "longDescription": "Use Microsoft Entra PIM from Codex to review eligible access, choose the intended assignment, and request activation with a justification through the bundled MCP server.",
     "developerName": "VEXXHOST, Inc.",
     "category": "Productivity",
     "capabilities": [
@@ -32,9 +32,9 @@
     ],
     "websiteURL": "https://github.com/vexxhost/entra-pim-mcp-server",
     "defaultPrompt": [
-      "List my eligible Entra PIM assignments.",
-      "Activate an eligible Entra PIM group.",
-      "Check whether a PIM role is already active."
+      "Show my eligible PIM access.",
+      "Request activation for a PIM assignment.",
+      "Check my current PIM access."
     ],
     "brandColor": "#2563EB"
   },

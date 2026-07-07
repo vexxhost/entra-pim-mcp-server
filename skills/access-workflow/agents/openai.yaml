@@ -1,0 +1,4 @@
+interface:
+  display_name: "Access Workflow"
+  short_description: "Route Entra PIM access requests"
+  default_prompt: "Use $access-workflow to route an Entra PIM access request through eligible assignment discovery, activation, and result reporting."

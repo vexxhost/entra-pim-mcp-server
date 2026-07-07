@@ -26,6 +26,7 @@ An MCP (Model Context Protocol) server for Azure Entra PIM (Privileged Identity 
 ### Codex plugin
 
 This repository includes a Codex plugin marketplace at `.agents/plugins/marketplace.json`.
+The marketplace entry points at the repository root as the `entra-pim` plugin.
 Install it directly from the repository:
 
 ```bash

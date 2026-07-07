@@ -1,13 +1,13 @@
 ---
-name: entra-pim
-description: Follow the Entra PIM access-request workflow when a user asks to inspect, choose, or activate privileged access.
+name: access-workflow
+description: Route Microsoft Entra PIM access requests through eligible assignment discovery, activation, and result reporting. Use when a user asks to inspect, choose, request, activate, or confirm privileged access through Entra PIM.
 ---
 
-# Entra PIM Access Workflow
+# Access Workflow
 
 ## Overview
 
-Use this skill when a user wants help with Microsoft Entra PIM access. The MCP server carries the cross-tool activation rules in its server instructions; keep this skill focused on when to use the plugin and how to present the result.
+Route Microsoft Entra PIM access requests through the right MCP-backed workflow. The MCP server carries the activation rules in its server instructions; keep this skill focused on selecting the workflow and presenting the result.
 
 ## Workflow
 
