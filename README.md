@@ -33,7 +33,13 @@ codex plugin marketplace add vexxhost/entra-pim-mcp-server --ref main
 codex plugin add entra-pim@vexxhost-entra-pim
 ```
 
-`AZURE_TENANT_ID` must be available in the environment for the Codex process that launches the MCP server.
+The plugin forwards `AZURE_TENANT_ID` from the Codex process environment to the MCP server. For Codex Desktop and the VS Code extension, shell environment variables may not be inherited, so put the tenant ID in `~/.codex/.env` and restart Codex:
+
+```shell
+export AZURE_TENANT_ID=00000000-0000-0000-0000-000000000000
+```
+
+Use your own Entra tenant ID in place of the placeholder. The plugin does not hardcode a tenant ID because tenant selection is deployment-specific.
 
 ### Run directly with uvx
 
