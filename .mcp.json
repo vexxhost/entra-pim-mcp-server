@@ -2,7 +2,7 @@
   "mcpServers": {
     "entra-pim": {
       "command": "uvx",
-      "args": ["entra-pim-mcp-server@1.0.0"],
+      "args": ["entra-pim-mcp-server@1.0.1"],
       "env_vars": ["AZURE_TENANT_ID"]
     }
   }

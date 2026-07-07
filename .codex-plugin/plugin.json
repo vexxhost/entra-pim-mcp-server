@@ -1,6 +1,6 @@
 {
   "name": "entra-pim",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Codex plugin for Microsoft Entra Privileged Identity Management access workflows.",
   "author": {
     "name": "VEXXHOST, Inc.",

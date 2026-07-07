@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.0.1](https://github.com/vexxhost/entra-pim-mcp-server/compare/v1.0.0...v1.0.1) (2026-07-07)
+
+
+### Security
+
+* refresh locked Python dependencies to pick up patched transitive packages
+
+
+### Miscellaneous Chores
+
+* add Codex plugin packaging and pin the MCP server to the published package version
+
 ## [1.0.0](https://github.com/vexxhost/entra-pim-mcp-server/compare/v0.1.0...v1.0.0) (2026-03-11)
 
 
