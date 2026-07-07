@@ -1,0 +1,20 @@
+{
+  "name": "vexxhost-entra-pim",
+  "interface": {
+    "displayName": "VEXXHOST Entra PIM"
+  },
+  "plugins": [
+    {
+      "name": "entra-pim",
+      "source": {
+        "source": "local",
+        "path": "./plugins/entra-pim"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}

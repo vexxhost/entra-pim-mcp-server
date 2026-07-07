@@ -57,6 +57,14 @@ GRAPH_SCOPES = [
 CONFIG_DIR = Path(user_config_dir("entra-pim-mcp-server"))
 AUTH_RECORD_PATH = CONFIG_DIR / "auth-record.json"
 
+PIM_INSTRUCTIONS = """Treat Microsoft Entra PIM work as an access-request workflow. Resolve the requested access to a concrete eligible assignment from Microsoft Graph before activating anything. If the request is vague or several assignments match, present candidate assignment names and ask the user to choose.
+
+Activation requires a user-provided justification. Do not invent one or turn casual intent into a formal justification. If the assignment is already active, report the current active state and expiry instead of activating again by default.
+
+Use assignment names exactly as returned by Microsoft Graph. Leave duration and directory scope at policy defaults unless the user asks for specific values. Do not infer downstream access, authorization, or operational readiness from successful PIM activation.
+
+Treat missing tenant configuration or browser sign-in as setup blockers, not PIM denials. If activation fails, preserve the service error and distinguish policy, eligibility, authentication, and configuration failures when the error makes that clear."""
+
 
 def _load_auth_record() -> AuthenticationRecord | None:
     try:
@@ -125,7 +133,7 @@ class ActivateResult(BaseModel):
     duration: str
 
 
-mcp = FastMCP("entra-pim-mcp-server")
+mcp = FastMCP("entra-pim-mcp-server", instructions=PIM_INSTRUCTIONS)
 
 
 @mcp.tool(

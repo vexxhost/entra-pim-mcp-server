@@ -23,6 +23,18 @@ An MCP (Model Context Protocol) server for Azure Entra PIM (Privileged Identity 
 
 ## Usage
 
+### Codex plugin
+
+This repository includes a Codex plugin marketplace at `.agents/plugins/marketplace.json`.
+Install it directly from the repository:
+
+```bash
+codex plugin marketplace add vexxhost/entra-pim-mcp-server --ref main
+codex plugin add entra-pim@vexxhost-entra-pim
+```
+
+`AZURE_TENANT_ID` must be available in the environment for the Codex process that launches the MCP server.
+
 ### Run directly with uvx
 
 ```bash
